@@ -1,7 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { BusinessReviewActions } from "./_components/business-review-actions";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function AdminPage() {
+  if (!process.env.DATABASE_URL) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
+          <h1 className="text-2xl font-bold text-amber-200">Admin unavailable: database not configured</h1>
+          <p className="mt-3 text-amber-100">
+            Set <code>DATABASE_URL</code> in your deployment environment, then reload this page.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
   const [pendingBusinesses, recentLeads, approvedBusinesses, matchedLeads, totalLeads] =
     await Promise.all([
       prisma.business.findMany({

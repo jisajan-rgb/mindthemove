@@ -73,6 +73,8 @@ For `prisma migrate` against Supabase, prefer the **direct** connection (port `5
 
 Never commit real keys. Do not put the service-role key in `NEXT_PUBLIC_*`.
 
+Vercel: this repo’s `build` / `vercel.json` `buildCommand` run `prisma generate` with a dummy `DATABASE_URL` fallback so a preview can **compile** without secrets. A live directory still needs real `DATABASE_URL` (and Auth keys for ops). Do not invent keys. Stripe is out of scope.
+
 ## Local run
 
 ```bash

@@ -7,46 +7,109 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum MoveType {
-  BUYING
-  SELLING
-  BOTH
+enum UserRole {
+  OPS_ADMIN
 }
 
-enum BusinessStatus {
-  PENDING
-  APPROVED
-  REJECTED
+enum Regulator {
+  SRA
+  CLC
 }
 
-model Business {
-  id            String         @id @default(cuid())
-  name          String
-  email         String
-  phone         String?
-  website       String?
-  service       String
-  coverageArea  String
-  description   String?
-  status        BusinessStatus @default(PENDING)
-  qualityScore  Int            @default(50)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  leads         Lead[]
+/// Phase 1 geography lock: Bristol only. Adding cities is an explicit schema change.
+enum City {
+  BRISTOL
 }
 
-model Lead {
-  id             String    @id @default(cuid())
-  fullName       String
-  email          String
-  phone          String?
-  postcode       String
-  moveType       MoveType
-  serviceNeeded  String
-  propertyValue  String?
-  timeline       String?
-  notes          String?
-  matchedBusinessId String?
-  matchedBusiness   Business? @relation(fields: [matchedBusinessId], references: [id])
-  createdAt      DateTime  @default(now())
+/// App user linked 1:1 with Supabase Auth (`auth.users.id`).
+model User {
+  id             String       @id @db.Uuid
+  email          String       @unique
+  role           UserRole     @default(OPS_ADMIN)
+  organisationId String       @db.Uuid
+  organisation   Organisation @relation(fields: [organisationId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("users")
+}
+
+/// Ops organisation for Mind the Move Ltd. Firms are directory entities, not tenants.
+model Organisation {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("organisations")
+}
+
+/// Conveyancing firm. Register presence alone is not enough to publish (O9).
+model Firm {
+  id                String     @id @default(uuid()) @db.Uuid
+  name              String
+  regulator         Regulator
+  regulatorNumber   String
+  /// Default false until ops record diligence. Public directory requires listed + diligencePassedAt.
+  listed            Boolean    @default(false)
+  clientMoneyOk     Boolean    @default(false)
+  diligenceNotes    String?
+  diligencePassedAt DateTime?
+  listings          Listing[]
+  reviews           Review[]
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  @@unique([regulator, regulatorNumber])
+  @@map("firms")
+}
+
+/// Public directory entry for a firm. Phase 1 city is locked to Bristol.
+model Listing {
+  id                   String   @id @default(uuid()) @db.Uuid
+  firmId               String   @db.Uuid
+  firm                 Firm     @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  city                 City     @default(BRISTOL)
+  postcodeOutwardCodes String[]
+  active               Boolean  @default(false)
+  reviews              Review[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@index([city, active])
+  @@map("listings")
+}
+
+/// Review ledger. Empty at seed. No Phase 1 write path. No independent-completion claim.
+model Review {
+  id     String  @id @default(uuid()) @db.Uuid
+  firmId String  @db.Uuid
+  firm   Firm    @relation(fields: [firmId], references: [id], onDelete: Cascade)
+  listingId String? @db.Uuid
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  comment String?
+  /// Present only when a real review exists. Never invent a rating for an empty ledger.
+  rating  Int?
+  /// Firm-attested completion timestamp. Can be delayed. Not independent of the firm.
+  firmAttestedCompletedAt DateTime?
+  createdAt DateTime @default(now())
+
+  @@map("reviews")
+}
+
+/// Sensitive admin actions. Metadata must not contain consumer PII.
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  actorUserId String?  @db.Uuid
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

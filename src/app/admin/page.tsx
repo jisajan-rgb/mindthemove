@@ -1,111 +1,72 @@
-import { prisma } from "@/lib/prisma";
-import { BusinessReviewActions } from "./_components/business-review-actions";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { getPrisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
-export default async function AdminPage() {
-  if (!process.env.DATABASE_URL) {
-    return (
-      <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6">
-          <h1 className="text-2xl font-bold text-amber-200">Admin unavailable: database not configured</h1>
-          <p className="mt-3 text-amber-100">
-            Set <code>DATABASE_URL</code> in your deployment environment, then reload this page.
-          </p>
-        </div>
-      </main>
-    );
+export default async function AdminHomePage() {
+  const prisma = getPrisma();
+  if (!prisma) {
+    return null;
   }
 
-  const [pendingBusinesses, recentLeads, approvedBusinesses, matchedLeads, totalLeads] =
-    await Promise.all([
-      prisma.business.findMany({
-        where: { status: "PENDING" },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      }),
-      prisma.lead.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      }),
-      prisma.business.count({ where: { status: "APPROVED" } }),
-      prisma.lead.count({ where: { matchedBusinessId: { not: null } } }),
-      prisma.lead.count(),
-    ]);
-
-  const matchRate = totalLeads > 0 ? ((matchedLeads / totalLeads) * 100).toFixed(1) : "0.0";
+  const [firmCount, listedCount, listingCount, reviewCount] = await Promise.all([
+    prisma.firm.count(),
+    prisma.firm.count({ where: { listed: true, diligencePassedAt: { not: null } } }),
+    prisma.listing.count({ where: { active: true, city: "BRISTOL" } }),
+    prisma.review.count(),
+  ]);
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-12 text-slate-100">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <h1 className="text-3xl font-bold">Admin dashboard</h1>
-
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-sm text-slate-400">Pending businesses</p>
-            <p className="mt-2 text-3xl font-semibold">{pendingBusinesses.length}</p>
-          </article>
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-sm text-slate-400">Approved businesses</p>
-            <p className="mt-2 text-3xl font-semibold">{approvedBusinesses}</p>
-          </article>
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-sm text-slate-400">Total leads</p>
-            <p className="mt-2 text-3xl font-semibold">{totalLeads}</p>
-          </article>
-          <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-            <p className="text-sm text-slate-400">Lead match rate</p>
-            <p className="mt-2 text-3xl font-semibold">{matchRate}%</p>
-          </article>
-        </section>
-
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <h2 className="text-xl font-semibold">
-            Pending business applications ({pendingBusinesses.length})
-          </h2>
-          <div className="mt-4 space-y-3">
-            {pendingBusinesses.length === 0 ? (
-              <p className="text-slate-400">No pending applications.</p>
-            ) : (
-              pendingBusinesses.map((biz) => (
-                <article key={biz.id} className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="font-medium">{biz.name}</p>
-                  <p className="text-sm text-slate-400">
-                    {biz.service} · {biz.coverageArea}
-                  </p>
-                  <p className="text-sm text-slate-400">{biz.email}</p>
-                  <BusinessReviewActions businessId={biz.id} />
-                </article>
-              ))
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-          <h2 className="text-xl font-semibold">Recent leads ({recentLeads.length})</h2>
-          <div className="mt-4 space-y-3">
-            {recentLeads.length === 0 ? (
-              <p className="text-slate-400">No leads yet.</p>
-            ) : (
-              recentLeads.map((lead) => (
-                <article key={lead.id} className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-                  <p className="font-medium">
-                    {lead.fullName} · {lead.postcode}
-                  </p>
-                  <p className="text-sm text-slate-400">
-                    {lead.serviceNeeded} · {lead.moveType}
-                  </p>
-                  <p className="text-sm text-slate-400">{lead.email}</p>
-                  <p className="text-sm text-cyan-300">
-                    {lead.matchedBusinessId ? "Matched to partner" : "Unmatched"}
-                  </p>
-                </article>
-              ))
-            )}
-          </div>
-        </section>
+    <div className="space-y-6">
+      <div>
+        <h1 className="font-serif text-3xl">Directory ops</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          CRUD for firms and Bristol listings. Reviews have no write path in
+          Phase 1. Listing a firm requires diligencePassedAt (O9).
+        </p>
       </div>
-    </main>
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Firms</CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{firmCount}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Diligence-listed
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{listedCount}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Active Bristol listings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{listingCount}</CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Review ledger
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{reviewCount}</CardContent>
+        </Card>
+      </section>
+      <div className="flex gap-3">
+        <Button asChild>
+          <Link href="/admin/firms">Manage firms</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/admin/listings">Manage listings</Link>
+        </Button>
+      </div>
+    </div>
   );
 }

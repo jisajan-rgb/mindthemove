@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { logError } from "@/lib/logging";
 import { getPrisma } from "@/lib/prisma";
 import { waitlistWriteSchema } from "@/lib/validations";
 
@@ -34,8 +33,9 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ ok: true, id: signal.id }, { status: 201 });
-  } catch (error) {
-    logError("waitlist_create_failed", error);
+  } catch {
+    // Code only — Prisma messages can include submitted fields.
+    console.error("waitlist_create_failed");
     return NextResponse.json({ code: "failed" }, { status: 500 });
   }
 }

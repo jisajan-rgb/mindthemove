@@ -91,6 +91,11 @@ export function publicDirectoryWhere(): Prisma.ListingWhereInput {
     firm: {
       listed: true,
       diligencePassedAt: { not: null },
+      // Soft-test lock: do not render the seed authorised firm on consumer pages.
+      NOT: {
+        regulator: "SRA",
+        regulatorNumber: "633024",
+      },
     },
   };
 }

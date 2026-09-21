@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BuyerShortlist } from "@/components/buyer-shortlist";
 import { EmptyReviewLedger } from "@/components/empty-review-ledger";
 import { EnvMissing } from "@/components/env-missing";
 import { SiteFooter } from "@/components/site-footer";
@@ -21,8 +22,11 @@ export default async function BristolDirectoryPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+        <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-6 py-12">
           <EnvMissing names={["DATABASE_URL"]} />
+          <EmptyDirectoryCopy />
+          <EmptyReviewLedger reviewCount={0} />
+          <BuyerShortlist />
         </main>
         <SiteFooter />
       </div>
@@ -41,6 +45,11 @@ export default async function BristolDirectoryPage() {
     orderBy: { firm: { name: "asc" } },
   });
 
+  const reviewCount = listings.reduce(
+    (sum, listing) => sum + listing.firm._count.reviews,
+    0,
+  );
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
@@ -51,22 +60,14 @@ export default async function BristolDirectoryPage() {
           </p>
           <h1 className="font-serif text-4xl tracking-tight">Bristol conveyancing firms</h1>
           <p className="max-w-2xl text-muted-foreground">
-            Only firms that have passed Mind the Move diligence are listed. A
-            live SRA or CLC number is required, and register presence alone is
+            Only firms that have passed Mind the Move diligence are listed here.
+            A live SRA or CLC number is required, and register presence alone is
             not enough to publish.
           </p>
         </header>
 
         {listings.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No listed firms in Bristol yet</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              When a firm passes diligence and ops activate a Bristol listing, it
-              will appear here. We will not fill this page with sample profiles.
-            </CardContent>
-          </Card>
+          <EmptyDirectoryCopy />
         ) : (
           <ul className="space-y-4">
             {listings.map((listing) => (
@@ -101,8 +102,32 @@ export default async function BristolDirectoryPage() {
             ))}
           </ul>
         )}
+
+        {listings.length === 0 ? <EmptyReviewLedger reviewCount={reviewCount} /> : null}
+        <BuyerShortlist />
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function EmptyDirectoryCopy() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>No firms are live on this directory yet</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm text-muted-foreground">
+        <p>
+          We are not filling this page with sample profiles. When a firm has
+          passed diligence and ops activate a Bristol listing, it will appear
+          here with its real regulator number.
+        </p>
+        <p>
+          Until then, use the conversation shortlist below. Nothing you tick is
+          sent to us.
+        </p>
+      </CardContent>
+    </Card>
   );
 }

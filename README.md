@@ -2,17 +2,23 @@
 
 Trust-first conveyancing directory. Phase 1 is a **Bristol public listing** of authorised firms plus **ops CRUD**. It is not a lead marketplace.
 
-Product: Mind the Move Ltd. Authorised firm on the matter for seed: **Nexa Law Limited, SRA 633024**.
+Product: Mind the Move Ltd.
+
+## Soft-test public UX (21 Sep)
+
+Consumer pages (`/` and `/bristol`) must **not** name the seed authorised firm. Seed still creates that firm for **ops/admin** only, with the Bristol listing **inactive**. The public directory is an honest empty ledger plus a local-only buyer conversation shortlist (no email capture, no matching, no Stripe).
+
+Do not publish placeholder reviews or sample firm cards to look busy.
 
 ## What this slice includes
 
 - Next.js 14 App Router, TypeScript strict, Tailwind, shadcn/ui
 - Prisma schema + migration for User, Organisation, Firm, Listing, Review, AuditLog
 - Supabase Auth for ops sign-in; RLS for the Data API
-- Public Bristol directory (`/bristol`) showing **listed + diligenced** firms only
+- Public Bristol directory (`/bristol`): real listed + active firms only; **empty during the consumer soft-test**
 - Honest empty review ledger (“reviews unlock after completion” — no fake stars)
 - Admin CRUD for firms and listings (`/admin`)
-- Seed: Nexa Law Limited only, listed, with `diligencePassedAt` set. **PLC is not seeded and must not appear as listed.**
+- Seed: authorised firm row for ops only, Bristol listing **inactive**. **PLC is not seeded.** Consumer HTML must not name the seed firm.
 
 ## What this slice does not include
 
@@ -61,7 +67,7 @@ Optional for seed:
 | `ADMIN_USER_ID` | UUID of an existing Supabase Auth user |
 | `ADMIN_EMAIL` | Email for that user (linked as `OPS_ADMIN`) |
 
-If these are missing, `npm run build` should still succeed (pages are dynamic and show a configuration message). **Migrate, seed, directory data, and admin CRUD need a real database.**
+If these are missing, `npm run build` still runs `prisma generate` with a local dummy `DATABASE_URL` fallback (compile only — not a real database). **Migrate, seed, directory data, and admin CRUD need a real database.** Do not invent Supabase or Stripe keys.
 
 For `prisma migrate` against Supabase, prefer the **direct** connection (port `5432`) if the pooler rejects migration statements. You can temporarily set `DATABASE_URL` to the direct URI for migrate, then switch back to the pooler for `next dev`.
 
@@ -100,11 +106,13 @@ npm run prisma:seed
 Seed behaviour:
 
 - Upserts organisation `Mind the Move Ltd` (`slug: mind-the-move`)
-- Upserts **Nexa Law Limited** / `SRA` / `633024` with `listed: true`, `clientMoneyOk: true`, and `diligencePassedAt` set
-- Ensures an active **Bristol** listing for that firm
+- Upserts the authorised firm row for **ops** (`SRA` / `633024`) with diligence recorded
+- Ensures a Bristol listing that is **inactive** so it does not appear on `/bristol`
 - Does **not** insert PLC (or any other firm)
 - Does **not** insert reviews (ledger stays empty)
 - If `ADMIN_USER_ID` and `ADMIN_EMAIL` are set, upserts that Auth user as `OPS_ADMIN`
+
+Consumer pages never print that firm name. Re-seed after pulling this change so an older active listing is switched off.
 
 Create the ops user in **Supabase Auth → Users** first, then paste the UUID into `.env.local` and re-seed. Alternatively, after Auth signup:
 

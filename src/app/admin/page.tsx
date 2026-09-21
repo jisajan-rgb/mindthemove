@@ -11,11 +11,12 @@ export default async function AdminHomePage() {
     return null;
   }
 
-  const [firmCount, listedCount, listingCount, reviewCount] = await Promise.all([
+  const [firmCount, listedCount, listingCount, reviewCount, waitlistCount] = await Promise.all([
     prisma.firm.count(),
     prisma.firm.count({ where: { listed: true, diligencePassedAt: { not: null } } }),
     prisma.listing.count({ where: { active: true, city: "BRISTOL" } }),
     prisma.review.count(),
+    prisma.waitlistSignal.count(),
   ]);
 
   return (
@@ -58,6 +59,14 @@ export default async function AdminHomePage() {
           </CardHeader>
           <CardContent className="text-3xl font-semibold">{reviewCount}</CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Waitlist signals
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-3xl font-semibold">{waitlistCount}</CardContent>
+        </Card>
       </section>
       <div className="flex gap-3">
         <Button asChild>
@@ -65,6 +74,9 @@ export default async function AdminHomePage() {
         </Button>
         <Button asChild variant="outline">
           <Link href="/admin/listings">Manage listings</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/admin/waitlist">Waitlist signals</Link>
         </Button>
       </div>
     </div>

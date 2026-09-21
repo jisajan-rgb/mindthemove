@@ -69,7 +69,7 @@ async function main() {
     await prisma.listing.update({
       where: { id: existingListing.id },
       data: {
-        active: true,
+        active: false,
         postcodeOutwardCodes: BRISTOL_OUTWARD,
       },
     });
@@ -79,7 +79,7 @@ async function main() {
         firmId: nexa.id,
         city: City.BRISTOL,
         postcodeOutwardCodes: BRISTOL_OUTWARD,
-        active: true,
+        active: false,
       },
     });
   }
@@ -112,12 +112,22 @@ async function main() {
   // PLC / any other firm must not appear as listed from this seed.
   const listedNames = listedFirms.map((firm) => firm.name);
 
+  const publicListings = await prisma.listing.count({
+    where: { active: true, city: City.BRISTOL },
+  });
+
+  const waitlistCount = await prisma.waitlistSignal.count();
+
   console.log("Seed complete.");
   console.log(`Organisation: ${organisation.name} (${organisation.slug})`);
   console.log(
-    `Listed firms: ${listedNames.join(", ") || "(none)"} — expected: ${NEXA_NAME} only`,
+    `Ops firms (not public copy): ${listedNames.join(", ") || "(none)"} — expected: ${NEXA_NAME} only`,
+  );
+  console.log(
+    `Active Bristol listings: ${publicListings} — expected: 0 for the consumer soft-test`,
   );
   console.log(`Review rows: ${reviewCount} — expected: 0 at cold start`);
+  console.log(`Waitlist signals: ${waitlistCount} — seed does not insert interest rows`);
   if (adminUserId && adminEmail) {
     console.log("Ops admin user linked from ADMIN_USER_ID.");
   } else {

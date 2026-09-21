@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     template: "%s · Mind the Move",
   },
   description:
-    "Trust-first conveyancing directory. Phase 1 lists authorised Bristol firms after diligence — reviews unlock after completion.",
+    "Trust-first conveyancing directory. Reviews unlock after completion. Request a named-lawyer shortlist for Bristol.",
 };
 
 export default function RootLayout({

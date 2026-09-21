@@ -110,3 +110,6 @@ CREATE POLICY audit_logs_admin_insert ON audit_logs
   FOR INSERT
   TO authenticated
   WITH CHECK (public.is_ops_admin());
+
+-- waitlist_signals RLS lives in prisma/migrations/20260921140000_waitlist_signals
+-- (no anon access; ops read via is_ops_admin).

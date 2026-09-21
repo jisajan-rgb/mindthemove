@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { EmptyReviewLedger } from "@/components/empty-review-ledger";
 import { EnvMissing } from "@/components/env-missing";
+import { FirmTeaser, SoftLedgerExplainer, SoftLedgerFormCard, SoftLedgerHero } from "@/components/soft-ledger";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +22,14 @@ export default async function BristolDirectoryPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-12">
+        <main className="mx-auto w-full max-w-5xl flex-1 space-y-12 px-6 py-12">
           <EnvMissing names={["DATABASE_URL"]} />
+          <SoftLedgerHero />
+          <SoftLedgerExplainer />
+          <EmptyDirectoryCopy />
+          <EmptyReviewLedger reviewCount={0} />
+          <SoftLedgerFormCard />
+          <FirmTeaser />
         </main>
         <SiteFooter />
       </div>
@@ -41,32 +48,23 @@ export default async function BristolDirectoryPage() {
     orderBy: { firm: { name: "asc" } },
   });
 
+  const reviewCount = listings.reduce(
+    (sum, listing) => sum + listing.firm._count.reviews,
+    0,
+  );
+
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-6 py-12">
-        <header className="space-y-3">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Public directory
-          </p>
-          <h1 className="font-serif text-4xl tracking-tight">Bristol conveyancing firms</h1>
-          <p className="max-w-2xl text-muted-foreground">
-            Only firms that have passed Mind the Move diligence are listed. A
-            live SRA or CLC number is required, and register presence alone is
-            not enough to publish.
-          </p>
-        </header>
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-12 px-6 py-12">
+        <SoftLedgerHero />
+        <SoftLedgerExplainer />
 
         {listings.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>No listed firms in Bristol yet</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              When a firm passes diligence and ops activate a Bristol listing, it
-              will appear here. We will not fill this page with sample profiles.
-            </CardContent>
-          </Card>
+          <>
+            <EmptyDirectoryCopy />
+            <EmptyReviewLedger reviewCount={reviewCount} />
+          </>
         ) : (
           <ul className="space-y-4">
             {listings.map((listing) => (
@@ -101,8 +99,24 @@ export default async function BristolDirectoryPage() {
             ))}
           </ul>
         )}
+
+        <SoftLedgerFormCard />
+        <FirmTeaser />
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function EmptyDirectoryCopy() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>No firms are live on this directory yet</CardTitle>
+      </CardHeader>
+      <CardContent className="text-sm text-muted-foreground">
+        We are not filling this page with sample profiles or placeholder reviews.
+      </CardContent>
+    </Card>
   );
 }

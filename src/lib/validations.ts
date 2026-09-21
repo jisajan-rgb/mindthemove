@@ -49,10 +49,28 @@ export const listingPatchSchema = z.object({
   active: z.boolean().optional(),
 });
 
+export const waitlistMoveIntentSchema = z.enum([
+  "BUYING",
+  "SELLING",
+  "BOTH",
+  "NOT_SURE",
+]);
+
+export const waitlistWriteSchema = z.object({
+  firstName: z.string().trim().min(1).max(80),
+  email: z.string().trim().email().max(120),
+  area: z.string().trim().min(1).max(120),
+  moveIntent: waitlistMoveIntentSchema,
+  timeline: z.string().trim().max(200).optional(),
+  notes: z.string().trim().max(2000).optional(),
+  consent: z.literal(true),
+});
+
 export type FirmWriteInput = z.infer<typeof firmWriteSchema>;
 export type FirmPatchInput = z.infer<typeof firmPatchSchema>;
 export type ListingWriteInput = z.infer<typeof listingWriteSchema>;
 export type ListingPatchInput = z.infer<typeof listingPatchSchema>;
+export type WaitlistWriteInput = z.infer<typeof waitlistWriteSchema>;
 
 export function parseDiligenceAt(
   value: string | null | undefined,
@@ -91,6 +109,11 @@ export function publicDirectoryWhere(): Prisma.ListingWhereInput {
     firm: {
       listed: true,
       diligencePassedAt: { not: null },
+      // Soft-test lock: do not render the seed authorised firm on consumer pages.
+      NOT: {
+        regulator: "SRA",
+        regulatorNumber: "633024",
+      },
     },
   };
 }

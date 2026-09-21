@@ -82,6 +82,14 @@ model Listing {
   @@map("listings")
 }
 
+/// Soft-test interest signal. Not a Lead, Intro, or Match.
+enum WaitlistMoveIntent {
+  BUYING
+  SELLING
+  BOTH
+  NOT_SURE
+}
+
 /// Review ledger. Empty at seed. No Phase 1 write path. No independent-completion claim.
 model Review {
   id     String  @id @default(uuid()) @db.Uuid
@@ -112,4 +120,22 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+/// Soft-test named-lawyer shortlist interest. Not a production lead path.
+model WaitlistSignal {
+  id         String             @id @default(uuid()) @db.Uuid
+  firstName  String
+  email      String
+  area       String
+  moveIntent WaitlistMoveIntent
+  timeline   String?
+  notes      String?
+  consent    Boolean
+  via        String             @default("waitlist")
+  status     String             @default("shortlist_pending")
+  createdAt  DateTime           @default(now())
+
+  @@index([createdAt])
+  @@map("waitlist_signals")
 }

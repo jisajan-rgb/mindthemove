@@ -6,19 +6,20 @@ Product: Mind the Move Ltd.
 
 ## Soft-test public UX (21 Sep)
 
-Consumer pages (`/` and `/bristol`) must **not** name the seed authorised firm. Seed still creates that firm for **ops/admin** only, with the Bristol listing **inactive**. The public directory is an honest empty ledger plus a local-only buyer conversation shortlist (no email capture, no matching, no Stripe).
+Consumer pages (`/` and `/bristol`) must **not** name the seed authorised firm (or PLC / Woodstock). Seed still creates that firm for **ops/admin** only, with the Bristol listing **inactive**. Public surfaces use Counsel-cleared waitlist copy: named-lawyer shortlist request, honesty strip, empty ledger. Metric is **waitlist interest signals**, not leads.
 
-Do not publish placeholder reviews or sample firm cards to look busy.
+Do not publish placeholder reviews, sample firm cards, stars, invented fees, or pay-per-intro language. Confirmation email is drafted in Counsel’s copy doc — **do not send** until Counsel clears it.
 
 ## What this slice includes
 
 - Next.js 14 App Router, TypeScript strict, Tailwind, shadcn/ui
-- Prisma schema + migration for User, Organisation, Firm, Listing, Review, AuditLog
+- Prisma schema + migration for User, Organisation, Firm, Listing, Review, AuditLog, WaitlistSignal
 - Supabase Auth for ops sign-in; RLS for the Data API
 - Public Bristol directory (`/bristol`): real listed + active firms only; **empty during the consumer soft-test**
+- Public waitlist form (Counsel copy) storing **WaitlistSignal** rows (`via: waitlist`, `status: shortlist_pending`)
 - Honest empty review ledger (“reviews unlock after completion” — no fake stars)
-- Admin CRUD for firms and listings (`/admin`)
-- Seed: authorised firm row for ops only, Bristol listing **inactive**. **PLC is not seeded.** Consumer HTML must not name the seed firm.
+- Admin CRUD for firms and listings (`/admin`) plus waitlist signal list (`/admin/waitlist`)
+- Seed: authorised firm row for ops only, Bristol listing **inactive**. **PLC is not seeded.** Consumer HTML must not name the seed firm. Waitlist table stays empty at seed.
 
 ## What this slice does not include
 
@@ -66,6 +67,7 @@ Optional for seed:
 | --- | --- |
 | `ADMIN_USER_ID` | UUID of an existing Supabase Auth user |
 | `ADMIN_EMAIL` | Email for that user (linked as `OPS_ADMIN`) |
+| `NEXT_PUBLIC_FIRM_INTEREST_EMAIL` | Optional mailto target for “Firm listing interest” |
 
 If these are missing, `npm run build` still runs `prisma generate` with a local dummy `DATABASE_URL` fallback (compile only — not a real database). **Migrate, seed, directory data, and admin CRUD need a real database.** Do not invent Supabase or Stripe keys.
 
@@ -98,7 +100,7 @@ Open:
 ## Database + seed
 
 1. Create a Supabase project (Postgres + Auth).
-2. Apply the Prisma migration (`prisma/migrations/20260921120000_phase1_init`). It creates tables **and** RLS policies from `supabase/rls.sql`.
+2. Apply Prisma migrations (`prisma/migrations/`). Init creates core tables + RLS; `20260921140000_waitlist_signals` adds `waitlist_signals`.
 3. Run the seed:
 
 ```bash
@@ -112,6 +114,7 @@ Seed behaviour:
 - Ensures a Bristol listing that is **inactive** so it does not appear on `/bristol`
 - Does **not** insert PLC (or any other firm)
 - Does **not** insert reviews (ledger stays empty)
+- Does **not** insert waitlist signals (interest table stays empty)
 - If `ADMIN_USER_ID` and `ADMIN_EMAIL` are set, upserts that Auth user as `OPS_ADMIN`
 
 Consumer pages never print that firm name. Re-seed after pulling this change so an older active listing is switched off.
@@ -132,7 +135,7 @@ VALUES (
 
 ## RLS (Data API)
 
-Anon/authenticated clients may **read** listed diligenced firms, their active Bristol listings, and reviews for those firms. Writes to firms/listings/audit logs require an authenticated `OPS_ADMIN` row. Reviews have **no write policy** in Phase 1.
+Anon/authenticated clients may **read** listed diligenced firms, their active Bristol listings, and reviews for those firms. Writes to firms/listings/audit logs require an authenticated `OPS_ADMIN` row. Reviews have **no write policy** in Phase 1. Waitlist signals are **not** readable via anon; public posts go through `/api/waitlist` (Prisma + Zod). Ops can list them at `/admin/waitlist`.
 
 The Next.js server uses Prisma (privileged `DATABASE_URL`) and checks Auth + `users.role` in application code. See `ARCHITECTURE.md`.
 

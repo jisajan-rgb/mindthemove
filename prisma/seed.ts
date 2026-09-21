@@ -116,6 +116,8 @@ async function main() {
     where: { active: true, city: City.BRISTOL },
   });
 
+  const waitlistCount = await prisma.waitlistSignal.count();
+
   console.log("Seed complete.");
   console.log(`Organisation: ${organisation.name} (${organisation.slug})`);
   console.log(
@@ -125,6 +127,7 @@ async function main() {
     `Active Bristol listings: ${publicListings} — expected: 0 for the consumer soft-test`,
   );
   console.log(`Review rows: ${reviewCount} — expected: 0 at cold start`);
+  console.log(`Waitlist signals: ${waitlistCount} — seed does not insert interest rows`);
   if (adminUserId && adminEmail) {
     console.log("Ops admin user linked from ADMIN_USER_ID.");
   } else {

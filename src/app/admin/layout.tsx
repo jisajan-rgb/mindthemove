@@ -38,6 +38,9 @@ export default async function AdminLayout({
             <Link href="/admin/listings" className="hover:underline">
               Listings
             </Link>
+            <Link href="/admin/waitlist" className="hover:underline">
+              Waitlist
+            </Link>
             <Link href="/bristol" className="text-muted-foreground hover:underline">
               Public directory
             </Link>

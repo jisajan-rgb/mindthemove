@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { BuyerShortlist } from "@/components/buyer-shortlist";
 import { EmptyReviewLedger } from "@/components/empty-review-ledger";
 import { EnvMissing } from "@/components/env-missing";
+import { FirmTeaser, SoftLedgerExplainer, SoftLedgerFormCard, SoftLedgerHero } from "@/components/soft-ledger";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -22,11 +22,14 @@ export default async function BristolDirectoryPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <SiteHeader />
-        <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-6 py-12">
+        <main className="mx-auto w-full max-w-5xl flex-1 space-y-12 px-6 py-12">
           <EnvMissing names={["DATABASE_URL"]} />
+          <SoftLedgerHero />
+          <SoftLedgerExplainer />
           <EmptyDirectoryCopy />
           <EmptyReviewLedger reviewCount={0} />
-          <BuyerShortlist />
+          <SoftLedgerFormCard />
+          <FirmTeaser />
         </main>
         <SiteFooter />
       </div>
@@ -53,21 +56,15 @@ export default async function BristolDirectoryPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-8 px-6 py-12">
-        <header className="space-y-3">
-          <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">
-            Public directory
-          </p>
-          <h1 className="font-serif text-4xl tracking-tight">Bristol conveyancing firms</h1>
-          <p className="max-w-2xl text-muted-foreground">
-            Only firms that have passed Mind the Move diligence are listed here.
-            A live SRA or CLC number is required, and register presence alone is
-            not enough to publish.
-          </p>
-        </header>
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-12 px-6 py-12">
+        <SoftLedgerHero />
+        <SoftLedgerExplainer />
 
         {listings.length === 0 ? (
-          <EmptyDirectoryCopy />
+          <>
+            <EmptyDirectoryCopy />
+            <EmptyReviewLedger reviewCount={reviewCount} />
+          </>
         ) : (
           <ul className="space-y-4">
             {listings.map((listing) => (
@@ -103,8 +100,8 @@ export default async function BristolDirectoryPage() {
           </ul>
         )}
 
-        {listings.length === 0 ? <EmptyReviewLedger reviewCount={reviewCount} /> : null}
-        <BuyerShortlist />
+        <SoftLedgerFormCard />
+        <FirmTeaser />
       </main>
       <SiteFooter />
     </div>
@@ -117,16 +114,8 @@ function EmptyDirectoryCopy() {
       <CardHeader>
         <CardTitle>No firms are live on this directory yet</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3 text-sm text-muted-foreground">
-        <p>
-          We are not filling this page with sample profiles. When a firm has
-          passed diligence and ops activate a Bristol listing, it will appear
-          here with its real regulator number.
-        </p>
-        <p>
-          Until then, use the conversation shortlist below. Nothing you tick is
-          sent to us.
-        </p>
+      <CardContent className="text-sm text-muted-foreground">
+        We are not filling this page with sample profiles or placeholder reviews.
       </CardContent>
     </Card>
   );

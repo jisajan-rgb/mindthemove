@@ -41,6 +41,13 @@ Mind the Move Phase 1 is a **trust-first public directory** plus **ops CRUD**. T
 
 - No file storage in Phase 1. If storage is added, use **short-lived signed URLs** only. Do not log consumer PII.
 
+## Waitlist signals
+
+- `waitlist_signals` stores **soft-test interest** (named-lawyer shortlist requests). It is not a Lead, Intro, or Match.
+- Public POST `/api/waitlist` validates with Zod, writes via Prisma, and logs only error codes (no PII).
+- No confirmation email is sent from the app. In-page success copy is the only automated acknowledgement until Counsel clears outbound mail.
+- Reversible: a later product path can map these rows into a real workflow without renaming the public form into a lead panel.
+
 ## Out of scope (do not add without a new signed brief)
 
 Lead, Intro, Match, CompletionEvent, LEAP, HMLR, enquiry-to-intro, agent brand flows, Stripe, HubSpot, Twilio, Resend, partner/client portals.
